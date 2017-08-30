@@ -55,6 +55,9 @@ class RanW(threading.Thread):
     if (distance>1):
         distance=1
     return distance
+	
+    def SetMotor():
+	#to-do
 
     def ObstAvoid(coll_dist):
     SetMotor(1,0,0)
