@@ -56,8 +56,9 @@ class RanW(threading.Thread):
         distance=1
     return distance
 	
-    def SetMotor():
-	#to-do
+   def SetMotor(botnum,velocity_left,velocity_right):
+    vrep.simxSetJointTargetVelocity(clientID,left_motor_handle[bot_num],velocity_left,vrep.simx_opmode_streaming)
+    vrep.simxSetJointTargetVelocity(clientID,right_motor_handle[bot_num],velocity_right,vrep.simx_opmode_streaming)
 
     def ObstAvoid(coll_dist):
     SetMotor(1,0,0)
