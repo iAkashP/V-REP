@@ -13,11 +13,8 @@ import matplotlib.pyplot as plt
 import vrep                       #importing v-rep module
 
 
-sensor_count=16                      #number of sensor to work with
-sensor_handle=[]		     #sensor handle
-
 class RanW(threading.Thread):
-    #Thread that executes a task every N seconds#
+    """Thread that executes a task every N seconds"""
 
     def __init__(self):
         threading.Thread.__init__(self)
@@ -26,11 +23,11 @@ class RanW(threading.Thread):
 
 
     def setInterval(self, interval):
-        #Set the number of seconds we sleep between executing our task#
+        """Set the number of seconds we sleep between executing our task"""
         self._interval = interval
 
     def shutdown(self):
-        #Stop this thread#
+        """Stop this thread"""
         self._finished.set()
 
     def run(self):
@@ -46,77 +43,73 @@ class RanW(threading.Thread):
 	ObstAvoid(coll_dist)
 	pass
 
-for i in xrange(sensor_count):
-errorCode,sensorhandle=vrep.simxGetObjectHandle(clientID,sensor[i],vrep.simx_opmode_blocking)
-sensor_handle.append(sensorhandle)            
+    def ReadSensor(botnum,sensornum):
+    frt=((botnum-1)*mp.sensor_count)+(sensornum-1)
+    current_sensor_handle=mp.sensor_handle[frt]
+    returnCode,detectionState,detectedPoint,detectedObjectHandle,detectedSurfaceNormalVector=vrep.simxReadProximitySensor(clientID,current_sensor_handle,vrep.simx_opmode_streaming)
+    time.sleep(0.01)
+    returnCode,detectionState,detectedPoint,detectedObjectHandle,detectedSurfaceNormalVector=vrep.simxReadProximitySensor(clientID,current_sensor_handle,vrep.simx_opmode_buffer)
+    distance=detectedPoint[2]
+    if (distance<0.00001):
+        distance=(np.random.rand()/10)+0.9
+    if (distance>1):
+        distance=1
+    return distance
 
-def ReadSensor(botnum,sensornum):
-frt=((botnum-1)*sensor_count)+(sensornum-1)
-current_sensor_handle=sensor_handle[frt]
-returnCode,detectionState,detectedPoint,detectedObjectHandle,detectedSurfaceNormalVector=vrep.simxReadProximitySensor(clientID,current_sensor_handle,vrep.simx_opmode_streaming)
-time.sleep(0.01)
-returnCode,detectionState,detectedPoint,detectedObjectHandle,detectedSurfaceNormalVector=vrep.simxReadProximitySensor(clientID,current_sensor_handle,vrep.simx_opmode_buffer)
-distance=detectedPoint[2]
-if (distance<0.00001):
-    distance=(np.random.rand()/10)+0.9
-if (distance>1):
-    distance=1
-return distance
+    def ObstAvoid(coll_dist):
+    SetMotor(1,0,0)
+    leftsensor=(ReadSensor(1,2)+ReadSensor(1,3))/2
+    frontsensor=(ReadSensor(1,4)+ReadSensor(1,5))/2
+    rightsensor=(ReadSensor(1,6)+ReadSensor(1,7))/2
+    print(leftsensor,frontsensor,rightsensor)
+    
+    if(frontsensor<coll_dist):
+        SetMotor(1,-0.2,-0.2)
+        time.sleep(1)
+        SetMotor(1,0.2,-0.2)
+    elif(leftsensor<coll_dist):
+        SetMotor(1,0.4,-0.4)
+    elif(rightsensor<coll_dist):
+        SetMotor(1,-0.4,0.4)
+    elif(rightsensor>coll_dist and leftsensor>coll_dist):
+        SetMotor(1,1,1)
+    time.sleep(0.5)
 
-def ObstAvoid(coll_dist):
-SetMotor(1,0,0)
-leftsensor=(ReadSensor(1,2)+ReadSensor(1,3))/2
-frontsensor=(ReadSensor(1,4)+ReadSensor(1,5))/2
-rightsensor=(ReadSensor(1,6)+ReadSensor(1,7))/2
-print(leftsensor,frontsensor,rightsensor)
+    def MoveBot(chart,Reg,io_count,velocity):
+    motor_code=0
+    perturbation=np.random.rand()/10
+    effect=np.random.rand()
+    if effect<0.5:
+        velocity=velocity-perturbation
+    else:
+        velocity=velocity+perturbation
 
-if(frontsensor<coll_dist):
-    SetMotor(1,-0.2,-0.2)
-    time.sleep(1)
-    SetMotor(1,0.2,-0.2)
-elif(leftsensor<coll_dist):
-    SetMotor(1,0.4,-0.4)
-elif(rightsensor<coll_dist):
-    SetMotor(1,-0.4,0.4)
-elif(rightsensor>coll_dist and leftsensor>coll_dist):
-    SetMotor(1,1,1)
-time.sleep(0.5)
+    if (chart=='w'):
+        SetMotor(1,velocity,velocity)
+        motor_code=0.5                       #assigning value or char(motor_code)
+    if (chart=='a'):
+        SetMotor(1,-velocity,velocity)
+        motor_code=0.25
+    if (chart=='s'):
+        SetMotor(1,-velocity,-velocity)
+        motor_code=1
+    if (chart=='d'):
+        SetMotor(1,velocity,-velocity)
+        motor_code=0.75
+    if (chart==' '):
+        Reg.save('Regression_file.xls')
+        sys.exit()
+    time.sleep(0.1)
+    leftsensor=(ReadSensor(1,2)+ReadSensor(1,3))/2
+    frontsensor=(ReadSensor(1,4)+ReadSensor(1,5))/2
+    rightsensor=(ReadSensor(1,6)+ReadSensor(1,7))/2
 
-def MoveBot(chart,Reg,io_count,velocity):
-motor_code=0
-perturbation=np.random.rand()/10
-effect=np.random.rand()
-if effect<0.5:
-    velocity=velocity-perturbation
-else:
-    velocity=velocity+perturbation
-
-if (chart=='w'):
-    SetMotor(1,velocity,velocity)
-    motor_code=0.5                       #assigning value or char(motor_code)
-if (chart=='a'):
-    SetMotor(1,-velocity,velocity)
-    motor_code=0.25
-if (chart=='s'):
-    SetMotor(1,-velocity,-velocity)
-    motor_code=1
-if (chart=='d'):
-    SetMotor(1,velocity,-velocity)
-    motor_code=0.75
-if (chart==' '):
-    Reg.save('Regression_file.xls')
-    sys.exit()
-time.sleep(0.1)
-leftsensor=(ReadSensor(1,2)+ReadSensor(1,3))/2
-frontsensor=(ReadSensor(1,4)+ReadSensor(1,5))/2
-rightsensor=(ReadSensor(1,6)+ReadSensor(1,7))/2
-
-Reg_sheet.write(io_count,0,chart)
-Reg_sheet.write(io_count,2,motor_code)
-Reg_sheet.write(io_count,3,leftsensor)
-Reg_sheet.write(io_count,4,frontsensor)
-Reg_sheet.write(io_count,5,rightsensor)
-return leftsensor,frontsensor,rightsensor
+    Reg_sheet.write(io_count,0,chart)
+    Reg_sheet.write(io_count,2,motor_code)
+    Reg_sheet.write(io_count,3,leftsensor)
+    Reg_sheet.write(io_count,4,frontsensor)
+    Reg_sheet.write(io_count,5,rightsensor)
+    return leftsensor,frontsensor,rightsensor
 
 RanW().start()                               #calling thread
 
