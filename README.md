@@ -1,5 +1,9 @@
-# V-REP
+## HEXapod
 
-some small codes, that will ease out works
+# simulations on V-REP
 
-1. Wrapper function for importing sensor data, from simulated bot
+Make sure you have following files in your directory, in order to run the various examples:
+1. vrep.py
+2. vrepConst.py
+3. the appropriate remote API library: "remoteApi.dll" (Windows) or "remoteApi.so" (Linux)
+4. simpleTest.py (or any other example file)
