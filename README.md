@@ -1,1 +1,3 @@
-HEXapod
+###HEXapod
+
+preliminary simulation stage
