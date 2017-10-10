@@ -1,3 +1,5 @@
-###HEXapod
+### HEXapod
 
-preliminary simulation stage
+## simulations on V-REP
+
+pulling positions and ordinates.
